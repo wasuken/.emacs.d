@@ -8,13 +8,17 @@
 (menu-bar-mode -1)
 
 ;; ツールバーを消す
-(tool-bar-mode -1)
+;; (tool-bar-mode -1)
 
 ;; 列数を表示する
 (column-number-mode t)
 
 ;; 行数を表示する
 (global-linum-mode t)
+(setq linum-format "%d ")
+(set-face-attribute 'linum nil
+					:foreground "#6272a4"
+					:height 0.9)
 
 ;; カーソルの点滅をやめる
 (blink-cursor-mode 0)
@@ -39,8 +43,8 @@
 (unless package-archive-contents
   (package-refresh-contents))
 
-(setq user-full-name "Bozhidar Batsov"
-      user-mail-address "bozhidar@batsov.com")
+(setq user-full-name "wasu ken"
+      user-mail-address "wevorence@gmail.com")
 
 ;; Always load newest byte code
 (setq load-prefer-newer t)
@@ -358,7 +362,12 @@ Start `ielm' if it's not already running."
 (use-package ruby-mode
   :config
   (add-hook 'ruby-mode-hook #'subword-mode)
-  (electric-pair-mode t))
+  (electric-pair-mode t)
+  (add-hook 'ruby-mode-hook
+			'(lambda ()
+               (robe-mode)
+               (robe-ac-setup)
+               (inf-ruby-keys))))
 
 (use-package clojure-mode
   :ensure t
@@ -387,10 +396,12 @@ Start `ielm' if it's not already running."
 (use-package cask-mode
   :ensure t)
 
+
 (use-package company
   :ensure t
   :config
   (global-company-mode)
+  (push 'company-lsp company-backends)
   (add-hook 'go-mode-hook (lambda()
                             (company-mode)
                             (setq company-transformers '(company-sort-by-backend-importance)) ;; ソート順
@@ -407,6 +418,8 @@ Start `ielm' if it's not already running."
                             (define-key company-active-map [tab] 'company-complete-selection) ;; TABで候補を設定
                             (define-key emacs-lisp-mode-map (kbd "C-M-i") 'company-complete) ;; 各種メジャーモードでも C-M-iで company-modeの補完を使う
                             )))
+
+(global-company-mode +1)
 
 (use-package zop-to-char
   :ensure t
@@ -572,7 +585,7 @@ Start `ielm' if it's not already running."
 
 ;; Fix error of "Failed to search TKK"
 (defun google-translate--get-b-d1 ()
-    ;; TKK='427110.1469889687'
+  ;; TKK='427110.1469889687'
   (list 427110 1469889687))
 
 (use-package neotree
@@ -665,8 +678,7 @@ Start `ielm' if it's not already running."
         w3m-input-coding-system 'utf-8
         w3m-output-coding-system 'utf-8
         w3m-terminal-coding-system 'utf-8)
-  (setq w3m-command "/usr/bin/w3m")
-  (setq browse-url-browser-function 'w3m-browse-url))
+  (setq w3m-command "/usr/bin/w3m"))
 
 ;;; use-package では駄目だったり、後から追加したもの
 (setq inferior-lisp-program "sbcl")
@@ -683,39 +695,46 @@ Start `ielm' if it's not already running."
 ;;;別のやつはC-c sなので注意
 (define-key global-map (kbd "C-c h") 'shell)
 
-(global-set-key (kbd "C->") 'other-window)
-(global-set-key (kbd "C-<") (lambda () (interactive) (other-window -1)))
+;;; バッファ移動。
+(cond ((equal system-type 'darwin)
+	   (global-set-key (kbd "C->") 'other-window)
+	   (global-set-key (kbd "C-<") (lambda () (interactive) (other-window -1))))
+	  (t
+	   (global-set-key (kbd "C->") 'other-window)
+	   (global-set-key (kbd "C-<") (lambda () (interactive) (other-window -1)))))
 
-;;; use-packageでの設定がよくわからなかった
-(golden-ratio-mode 1)
+(use-package golden-ratio
+  :ensure t
+  :config
+  ;;; use-packageでの設定がよくわからなかった
+  (golden-ratio-mode 1)
 ;;; 条件に応じてウィンドウの大きさを変更しない
-;; ウィンドウの大きさを変更しないメジャーモード
-(setq golden-ratio-exclude-modes '(calendar-mode))
-;; ウィンドウの大きさを変更しないバッファ名
-(setq golden-ratio-exclude-buffer-names '(" *Org tags*" " *Org todo*"))
-;; ウィンドウの大きさを変更しないバッファ名の正規表現
-(setq golden-ratio-exclude-buffer-regexp '("\\*anything" "\\*helm"))
+  ;; ウィンドウの大きさを変更しないメジャーモード
+  (setq golden-ratio-exclude-modes '(calendar-mode))
+  ;; ウィンドウの大きさを変更しないバッファ名
+  (setq golden-ratio-exclude-buffer-names '(" *Org tags*" " *Org todo*"))
+  ;; ウィンドウの大きさを変更しないバッファ名の正規表現
+  (setq golden-ratio-exclude-buffer-regexp '("\\*anything" "\\*helm"))
 
 ;;; ウィンドウ選択系のコマンドで作用させる
-(setq golden-ratio-extra-commands
-      '(windmove-left windmove-right windmove-down windmove-up))
-
-(load (expand-file-name "~/.roswell/helper.el"))
+  (setq golden-ratio-extra-commands
+		'(windmove-left windmove-right windmove-down windmove-up))
+  )
 
 ;; UTF-8 に統一
 (setq process-coding-system-alist
       (cons '("gosh" utf-8 . utf-8) process-coding-system-alist))
 
 (setq scheme-program-name "gosh -i")
-(autoload 'scheme-mode "cmuscheme" "Major mode for Scheme." t)
-(autoload 'run-scheme "cmuscheme" "Run an inferior Scheme process." t)
+;; (autoload 'scheme-mode "cmuscheme" "Major mode for Scheme." t)
+;; (autoload 'run-scheme "cmuscheme" "Run an inferior Scheme process." t)
 
 (setq load-path (cons "~/.emacs.d/Emacs-gosh-mode/" load-path))
 (require 'gosh-config)
 ;;; こいつはgit cloneしてきて、sudo make installしていれたので
 ;;; 最初は動かないので注意
 ;;gauche-manual
-(autoload 'gauche-manual "gauche-manual" "jump to gauche online manual." t)
+;; (autoload 'gauche-manual "gauche-manual" "jump to gauche online manual." t)
 (add-to-list 'auto-mode-alist '("\\.scm$'" . gosh-mode))
 
 (add-hook 'gosh-mode-hook
@@ -725,15 +744,14 @@ Start `ielm' if it's not already running."
 
 (define-key global-map (kbd "C-c g") 'gosh-run)
 
-;; (setq load-path (cons "~/.emacs.d/elpa/point-undo/" load-path))
-;; (require 'point-undo)
-;; (define-key global-map (kbd "C-c @") '(lambda ()
-;;                                         (interactive)
-;;                                         (mark-whole-buffer)
-;;                                         (indent-region (region-beginning)
-;;                                                        (region-end))
-;;                                         (point-undo)))
-;; (setq debug-on-error t)
+(use-package lsp-go
+  :after (lsp-mode go-mode)
+  :custom (lsp-go-language-server-flags '(
+										  "-gocodecompletion"
+										  "-diagnostics"
+										  "-lint-tool=golint"))
+  :hook (go-mode . lsp-go-enable)
+  :commands lsp-go-enable)
 
 ;;; golang setting
 (use-package go-mode
@@ -743,7 +761,7 @@ Start `ielm' if it's not already running."
   (add-to-list 'exec-path (expand-file-name "/usr/lib/go/bin"))
   ;; go get で入れたツールのパスを通す
   (add-to-list 'exec-path (expand-file-name "~/develop/go/bin/"))
-
+  (add-hook 'go-mode-hook #'lsp-go-enable)
   ;; flycheck-modeを有効化してシンタックスエラーを検知
   (add-hook 'go-mode-hook 'flycheck-mode)
   (add-hook 'go-mode-hook (lambda()
@@ -752,7 +770,8 @@ Start `ielm' if it's not already running."
                             (set (make-local-variable 'company-backends) '(company-go))
                             (setq indent-tabs-mode nil)    ; タブを利用
                             (setq c-basic-offset 4)    ; tabサイズを4にする
-                            (setq tab-width 4))))
+                            (setq tab-width 4)
+							(add-hook 'before-save-hook 'gofmt-before-save))))
 
 (defun godoc-get-buffer (query)
   "Get an empty buffer for a godoc QUERY."
@@ -770,7 +789,20 @@ Start `ielm' if it's not already running."
 (use-package ensime
   :ensure t
   :config
-  (add-hook 'scala-mode-hook 'ensime-scala-mode-hook))
+  (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+  (add-hook 'java-mode-hook 'ensime-mode)
+  :hook (java-mode . ensime-mode))
+
+(use-package lsp-scala
+  :load-path "~/.emacs.d/elpa/lsp-scala"
+  :after scala-mode
+  :demand t
+  :hook (scala-mode . lsp)
+  :init (setq lsp-scala-server-command "/usr/local/bin/metals-emacs"))
+
+(use-package sbt-mode
+  :ensure t
+  :commands sbt-start sbt-command)
 
 (use-package sbt-mode
   :commands sbt-start sbt-command
@@ -783,13 +815,6 @@ Start `ielm' if it's not already running."
    minibuffer-local-completion-map))
 (put 'upcase-region 'disabled nil)
 
-; anthy.el をロードする
-(load-library "anthy")
-(setq default-input-method "japanese-anthy")
-(autoload 'boiling-rK-trans "boiling-anthy" "romaji-kanji conversion" t)
-(autoload 'boiling-rhkR-trans "boiling-anthy" "romaji-kana conversion" t)
-(global-set-key "\C-t" 'boiling-rK-trans)
-(global-set-key "\M-t" 'boiling-rhkR-trans)
 ;; Timeoutの変更
 (if (>= emacs-major-version 22)
     (setq anthy-accept-timeout 1))
@@ -809,15 +834,15 @@ Start `ielm' if it's not already running."
           (lambda ()
             (set-buffer-process-coding-system 'utf-8-unix 'utf-8-unix)))
 
-(add-hook 'set-language-environment-hook
-          (lambda ()
-            (when (equal "ja_JP.UTF-8" (getenv "LANG"))
-             (setq default-process-coding-system '(utf-8 . utf-8))
-             (setq default-file-name-coding-system 'utf-8))
-            (when (equal "Japanese" current-language-environment)
-             (setq default-buffer-file-coding-system 'utf-8))))
+;; (add-hook 'set-language-environment-hook
+;;           (lambda ()
+;;             (when (equal "ja_JP.UTF-8" (getenv "LANG"))
+;;              (setq default-process-coding-system '(utf-8 . utf-8))
+;;              (setq default-file-name-coding-system 'utf-8))
+;;             (when (equal "Japanese" current-language-environment)
+;;              (setq default-buffer-file-coding-system 'utf-8))))
 
-(set-language-environment "Japanese")
+;; (set-language-environment "Japanese")
 
 ;;; R言語の設定
 (setq load-path (cons "/usr/share/emacs/site-lisp/ess" load-path))
@@ -904,13 +929,13 @@ Start `ielm' if it's not already running."
 (use-package python
   :ensure t
   :config
-  (setq auto-mode-alist (cons '("\\.py\\'" . python-mode) auto-mode-alist)))
+  (setq auto-mode-alist (cons '("\\.py$'" . python-mode) auto-mode-alist)))
 
-(use-package jedi
-  :ensure t
-  :config
-  (add-hook 'python-mode-hook 'jedi:setup)
-  (setq jedi:complete-on-dot t))
+;; (use-package jedi
+;;   :ensure t
+;;   :config
+;;   (add-hook 'python-mode-hook 'jedi:setup)
+;;   (setq jedi:complete-on-dot t))
 
 (defun insert-current-time()
   (interactive)
@@ -922,23 +947,53 @@ Start `ielm' if it's not already running."
   :ensure t
   :config)
 
+(use-package intero
+  :ensure t)
+
+(use-package lsp-mode
+  :ensure t)
+
+;;; lsp-mode用
+(use-package f
+  :ensure t)
+;;; lsp-mode用
+(use-package ht
+  :ensure t)
+
+(use-package eglot
+  :ensure t)
 (use-package haskell-mode
   :ensure t
   :config
-  (add-to-list 'load-path (expand-file-name "~/.emacs.d/company-ghc"))
-  (require 'company-ghc)
-  (require 'ghc)
-  (setq company-idle-delay 0.5)
-  (setq company-minimum-prefix-length 2)
-  (setq company-selection-wrap-around t)
-  (add-to-list 'company-backends 'company-ghc)
-  (custom-set-variables '(company-ghc-show-info t))
-  (require 'ac-haskell-process) ; if not installed via package.el
-  (add-hook 'interactive-haskell-mode-hook 'ac-haskell-process-setup)
-  (add-hook 'haskell-interactive-mode-hook 'ac-haskell-process-setup)
-  (eval-after-load "auto-complete"
-	'(add-to-list 'ac-modes 'haskell-interactive-mode))
-)
+  (add-hook 'haskell-mode-hook 'intero-mode)
+  (add-to-list 'load-path "~/.emacs.d/elpa/lsp-ui")
+  (add-to-list 'load-path "~/.emacs.d/elpa/lsp-haskell")
+  (require 'lsp-mode)
+  (require 'lsp-ui)
+  (require 'lsp-haskell)
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  (add-hook 'haskell-mode-hook #'lsp)
+  (add-hook 'haskell-mode-hook 'flycheck-mode)
+  (flycheck-add-next-checker 'intero '(warning . haskell-hlint))
+  ;; (add-hook 'haskell-mode-hook 'eglot-ensure)
+  (setf flymake-allowed-file-name-masks
+		(delete '("\\.l?hs\\'" haskell-flymake-init)
+				flymake-allowed-file-name-masks))
+  )
+
+
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode))
+
+(use-package company
+  :config
+  (global-company-mode)
+  (push 'company-lsp company-backends))
+
+;; (use-package lsp-haskell
+;;   :ensure t
+;;   :config
+;;   (add-hook 'haskell-mode-hook #'lsp))
 
 ;;; これはあかんやろ
 (defun replace-sepa (left &optional right)
@@ -987,9 +1042,9 @@ Start `ielm' if it's not already running."
 (defun rep-comma-to-commaspace ()
   (interactive)
   (let* ((cur-str  (buffer-substring (region-beginning) (region-end)))
-		(insert-str (replace-regexp-in-string ","
-									  ", "
-									  cur-str)))
+		 (insert-str (replace-regexp-in-string ","
+											   ", "
+											   cur-str)))
 	(delete-region (region-beginning) (region-end))
 	(insert (replace-regexp-in-string ", +"
 									  ", "
@@ -1005,8 +1060,170 @@ Start `ielm' if it's not already running."
   :ensure t
   :config)
 
-(add-hook 'ruby-mode-hook
-          '(lambda ()
-             (robe-mode)
-             (robe-ac-setup)
-             (inf-ruby-keys)))
+(setq inferior-lisp-program "/usr/local/bin/sbcl")
+(add-to-list 'load-path "~/.emacs.d/slime/")
+(require 'slime)
+(slime-setup)
+
+;; (let ((ros-path "~/.roswell/helper.el"))
+;;   (cond ((file-exists-p ros-path)
+;; 		 (load (expand-file-name ros-path)))))
+
+
+;;; OSX用の設定
+(cond ((not (equal system-type 'darwin))
+	   ;; anthy.el をロードする
+	   (load-library "anthy")
+	   (setq default-input-method "japanese-anthy")
+	   (autoload 'boiling-rK-trans "boiling-anthy" "romaji-kanji conversion" t)
+	   (autoload 'boiling-rhkR-trans "boiling-anthy" "romaji-kana conversion" t)
+	   (global-set-key "\C-t" 'boiling-rK-trans)
+	   (global-set-key "\M-t" 'boiling-rhkR-trans)))
+
+;;; 演算子の左右に空白が一つ存在している状態にする
+(defun one-space-left-and-right-operator ()
+  (interactive)
+  (let* ((cur-str (buffer-substring (region-beginning) (region-end))))
+	(delete-region (region-beginning) (region-end))
+	(insert (replace-regexp-in-string "\\([-¥+¥*/=<>]+\\)- \\([0-9]+\\)" "\\1 -\\2"
+									  (replace-regexp-in-string "\s*\\([-¥+¥*/=<>]+\\)\s*" " \\1 " cur-str)))))
+
+(defun replace-space ()
+  (interactive)
+  (let* ((cur-str (buffer-substring (region-beginning) (region-end))))
+	(delete-region (region-beginning) (region-end))
+	(insert (replace-regexp-in-string
+			 "\s+" "" cur-str))))
+
+(define-key global-map (kbd "C-c C-d SPC") 'replace-space)
+(define-key global-map (kbd "C-c SPC") 'one-space-left-and-right-operator)
+;; バックスラッシュ入力用
+(define-key global-map (kbd "M-¥") '(lambda ()
+									  (interactive)
+									  (insert "\\")))
+
+(add-to-list 'load-path "~/.emacs.d/elpa/lsp-ruby")
+(require 'lsp-ruby)
+(add-hook 'ruby-mode-hook #'lsp)
+
+;; (use-package web-mode
+;;   :ensure t
+;;   :config
+;;   (add-to-list 'auto-mode-alist '("\\.js[x]?$" . web-mode))
+;;   (setq web-mode-content-types-alist
+;; 		'(("jsx" . "\\.js[x]?\\'")))
+;;   (add-hook 'web-mode-hook
+;; 			'(lambda ()
+;;                (setq web-mode-attr-indent-offset nil)
+;;                (setq web-mode-markup-indent-offset 2)
+;;                (setq web-mode-css-indent-offset 2)
+;;                (setq web-mode-code-indent-offset 2)
+;;                (setq web-mode-sql-indent-offset 2)
+;;                (setq indent-tabs-mode nil)
+;;                (setq tab-width 2)
+;; 			   )))
+
+(use-package rjsx-mode
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '(".*\\.js\\'" . rjsx-mode)))
+
+(use-package ace-window
+  :ensure t
+  :functions hydra-frame-window/body
+  :custom
+  (aw-keys '(?j ?k ?l ?i ?o ?h ?y ?u ?p))
+  :custom-face
+  (aw-leading-char-face ((t (:height 4.0 :foreground "#f1fa8c"))))
+  :config
+  (global-set-key (kbd "C-x o") 'ace-window)
+  (add-hook 'ace-window-display-mode-hook 'golden-ratio--post-command-hook))
+
+(use-package doom-themes
+  :ensure t
+  :custom
+  (doom-themes-enable-italic t)
+  (doom-themes-enable-bold t)
+  :custom-face
+  (doom-modeline-bar ((t (:background "#6272a4"))))
+  :config
+  (load-theme 'doom-dracula t)
+  (doom-themes-neotree-config)
+  (doom-themes-org-config))
+
+(use-package doom-modeline
+  :ensure t
+  :custom
+  (doom-modeline-buffer-file-name-style 'truncate-with-project)
+  (doom-modeline-icon t)
+  (doom-modeline-major-mode-icon nil)
+  (doom-modeline-minor-modes nil)
+  :hook
+  (after-init . doom-modeline-mode)
+  :config
+  (line-number-mode 0)
+  (column-number-mode 0)
+  (doom-modeline-def-modeline 'main
+	'(bar workspace-number window-number evil-state god-state ryo-modal xah-fly-keys matches buffer-info remote-host buffer-position parrot selection-info)
+	'(misc-info persp-name lsp github debug minor-modes input-method major-mode process vcs checker)))
+
+(use-package highlight-indent-guides
+  :ensure t
+  :diminish
+  :hook
+  ((prog-mode yaml-mode) . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-auto-enabled t)
+  (highlight-indent-guides-responsive t)
+  (highlight-indent-guides-method 'character)) ; column
+
+(use-package beacon
+  :ensure t
+  :custom
+  (beacon-color "yellow")
+  :config
+  (beacon-mode 1))
+
+(use-package minimap
+  :ensure t
+  :commands
+  (minimap-bufname minimap-create minimap-kill)
+  :custom
+  (minimap-major-modes '(prog-mode))
+
+  (minimap-window-location 'right)
+  (minimap-update-delay 0.2)
+  (minimap-minimum-width 20)
+  :bind
+  ("C-c m" . ladicle/toggle-minimap)
+  :preface
+  (defun ladicle/toggle-minimap ()
+    "Toggle minimap for current buffer."
+    (interactive)
+    (if (null minimap-bufname)
+		(minimap-create)
+      (minimap-kill)))
+  :config
+  (custom-set-faces
+   '(minimap-active-region-background
+     ((((background dark)) (:background "#555555555555"))
+      (t (:background "#C847D8FEFFFF"))) :group 'minimap)))
+
+
+(use-package rustic
+  :ensure t
+  :defer t
+  :init
+  (setq rustic-rls-pkg 'eglot)
+  :config
+  (add-to-list 'exec-path(expand-file-name "~/.cargo/bin/"))
+  (add-to-list 'auto-mode-alist '("\\.rs\\'"  . rust-mode))
+  (add-hook 'rust-mode-hook #'racer-mode)
+  (add-hook 'racer-mode-hook #'eldoc-mode))
+
+(use-package quickrun
+	:defer t
+	:ensure t)
+(use-package racer
+	:defer t
+	:ensure t)
