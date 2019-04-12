@@ -531,6 +531,8 @@ Start `ielm' if it's not already running."
   (global-set-key (kbd "C-x l") 'counsel-locate)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history))
 
+(font-spec :family "Sans Regular" :size 14)
+
 (when (eq system-type 'windows-nt)
   (setq w32-pass-lwindow-to-system nil)
   (setq w32-lwindow-modifier 'super) ; Left Windows key
@@ -943,9 +945,38 @@ Start `ielm' if it's not already running."
 
 (define-key global-map (kbd "C-c d") `insert-current-time)
 
+(defun php-insert-> ()
+  (interactive)
+  (insert "->"))
+(defun php-insert=> ()
+  (interactive)
+  (insert "=>"))
+
+(defun php-insert-special=> ()
+  (interactive)
+  (let ((default-point (point)))
+	(insert "'' => ''")
+	(goto-char default-point)))
+
+(defun move-front-comma ()
+  (interactive)
+  (goto-char (+ (point) (string-match "," (buffer-substring (point) (point-max))))))
+
+(defun move-back-comma ()
+  (interactive)
+  (goto-char (- (point)
+				(string-match ","
+							  (reverse (buffer-substring (point-min) (point)))))))
+
 (use-package php-mode
   :ensure t
-  :config)
+  :config
+  (define-key php-mode-map (kbd "C-.") 'php-insert->)
+  (define-key php-mode-map (kbd "C-M->") 'php-insert-special=>)
+  (define-key global-map (kbd "C-, >") 'move-front-comma)
+  (define-key global-map (kbd "C-, <") 'move-back-comma)
+  (define-key web-mode-map (kbd "C-.") 'php-insert->)
+  (define-key web-mode-map (kbd "C-M->") 'php-insert-special=>))
 
 (use-package intero
   :ensure t)
@@ -970,7 +1001,7 @@ Start `ielm' if it's not already running."
   (add-to-list 'load-path "~/.emacs.d/elpa/lsp-haskell")
   (require 'lsp-mode)
   (require 'lsp-ui)
-  (require 'lsp-haskell)
+  ;; (require 'lsp-haskell)
   (add-hook 'lsp-mode-hook 'lsp-ui-mode)
   (add-hook 'haskell-mode-hook #'lsp)
   (add-hook 'haskell-mode-hook 'flycheck-mode)
@@ -1102,9 +1133,9 @@ Start `ielm' if it's not already running."
 									  (interactive)
 									  (insert "\\")))
 
-(add-to-list 'load-path "~/.emacs.d/elpa/lsp-ruby")
-(require 'lsp-ruby)
-(add-hook 'ruby-mode-hook #'lsp)
+;; (add-to-list 'load-path "~/.emacs.d/elpa/lsp-ruby")
+;; (require 'lsp-ruby)
+;; (add-hook 'ruby-mode-hook #'lsp)
 
 ;; (use-package web-mode
 ;;   :ensure t
@@ -1128,88 +1159,6 @@ Start `ielm' if it's not already running."
   :config
   (add-to-list 'auto-mode-alist '(".*\\.js\\'" . rjsx-mode)))
 
-(use-package ace-window
-  :ensure t
-  :functions hydra-frame-window/body
-  :custom
-  (aw-keys '(?j ?k ?l ?i ?o ?h ?y ?u ?p))
-  :custom-face
-  (aw-leading-char-face ((t (:height 4.0 :foreground "#f1fa8c"))))
-  :config
-  (global-set-key (kbd "C-x o") 'ace-window)
-  (add-hook 'ace-window-display-mode-hook 'golden-ratio--post-command-hook))
-
-(use-package doom-themes
-  :ensure t
-  :custom
-  (doom-themes-enable-italic t)
-  (doom-themes-enable-bold t)
-  :custom-face
-  (doom-modeline-bar ((t (:background "#6272a4"))))
-  :config
-  (load-theme 'doom-dracula t)
-  (doom-themes-neotree-config)
-  (doom-themes-org-config))
-
-(use-package doom-modeline
-  :ensure t
-  :custom
-  (doom-modeline-buffer-file-name-style 'truncate-with-project)
-  (doom-modeline-icon t)
-  (doom-modeline-major-mode-icon nil)
-  (doom-modeline-minor-modes nil)
-  :hook
-  (after-init . doom-modeline-mode)
-  :config
-  (line-number-mode 0)
-  (column-number-mode 0)
-  (doom-modeline-def-modeline 'main
-	'(bar workspace-number window-number evil-state god-state ryo-modal xah-fly-keys matches buffer-info remote-host buffer-position parrot selection-info)
-	'(misc-info persp-name lsp github debug minor-modes input-method major-mode process vcs checker)))
-
-(use-package highlight-indent-guides
-  :ensure t
-  :diminish
-  :hook
-  ((prog-mode yaml-mode) . highlight-indent-guides-mode)
-  :custom
-  (highlight-indent-guides-auto-enabled t)
-  (highlight-indent-guides-responsive t)
-  (highlight-indent-guides-method 'character)) ; column
-
-(use-package beacon
-  :ensure t
-  :custom
-  (beacon-color "yellow")
-  :config
-  (beacon-mode 1))
-
-(use-package minimap
-  :ensure t
-  :commands
-  (minimap-bufname minimap-create minimap-kill)
-  :custom
-  (minimap-major-modes '(prog-mode))
-
-  (minimap-window-location 'right)
-  (minimap-update-delay 0.2)
-  (minimap-minimum-width 20)
-  :bind
-  ("C-c m" . ladicle/toggle-minimap)
-  :preface
-  (defun ladicle/toggle-minimap ()
-    "Toggle minimap for current buffer."
-    (interactive)
-    (if (null minimap-bufname)
-		(minimap-create)
-      (minimap-kill)))
-  :config
-  (custom-set-faces
-   '(minimap-active-region-background
-     ((((background dark)) (:background "#555555555555"))
-      (t (:background "#C847D8FEFFFF"))) :group 'minimap)))
-
-
 (use-package rustic
   :ensure t
   :defer t
@@ -1227,3 +1176,5 @@ Start `ielm' if it's not already running."
 (use-package racer
 	:defer t
 	:ensure t)
+
+(setq sql-indent-offset 2)
